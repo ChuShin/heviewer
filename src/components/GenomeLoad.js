@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import Loader from "react-loader-spinner";
 import { csv } from 'd3-fetch'
 import { ascending } from 'd3-array'
 
 import GenomeGroup from './GenomeGroup'
 
-const parseNA = string => (string === 'NA' ? undefined : string)
-
 function inputFormat(d) {
   return {
-    genre: parseNA(d.genre),
-    revenue: +d.revenue,
+    chr: d.chr,
+    start: +d.start,
+    end: +d.end,
+    value: +d.value
   }
 }
 
@@ -28,21 +29,22 @@ const GenomeLoad = () => {
   const [genome, setGenomeData] = useState(null)
 
   useEffect(() => {
-    csv('/data/bna.csv', inputFormat).then(data => {
-      const dataClean = filterData(data)
+    csv('./heviewer/data/bna.csv', inputFormat).then(data => {
+      //const dataClean = filterData(data)
       setGenomeData(
-        formatData(dataClean).sort((a, b) => {
-          return ascending(a.genre, b.genre)
+        formatData(data).sort((a, b) => {
+          return ascending(a.chr, b.chr)
         }),
       )
     })
   }, [])
 
   if (genome === null) {
-    return <p>Loading...</p>
+    // add a loader timeout in 10s
+    return <Loader type="Oval" color="#00BFFF" height={100} width={100} timeout={10000} />
   }
 
-  return <GenomeLoad data={genome} />
+  return <GenomeGroup data={genome} />
 }
 
 export default GenomeLoad

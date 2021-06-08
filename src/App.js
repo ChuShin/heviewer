@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import { Component } from 'react'
 import './App.css'
 import GenomeLoad from './components/GenomeLoad'
 
@@ -9,7 +9,7 @@ class App extends Component {
      <div className='App-header'>
      <h2>dashboard</h2>
      </div>
-     <GenomeLoad size={[800,500]} />
+     <GenomeLoad />
      </div>
   )
   }
