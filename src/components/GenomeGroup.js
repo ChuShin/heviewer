@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { max } from 'd3-array'
 import { select } from 'd3-selection'
 import { nest } from 'd3-collection'

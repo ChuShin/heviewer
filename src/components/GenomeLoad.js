@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Loader from "react-loader-spinner";
 import { csv } from 'd3-fetch'
 import { ascending } from 'd3-array'
