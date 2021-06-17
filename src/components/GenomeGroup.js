@@ -23,11 +23,16 @@ function setSelectedChr() {
 
 }
 
-function getGenomeSummary(data) {
+function getGenomeSummary(d) {
+
+    var data = nest()
+      .key(function(d) { return d.group })
+      .entries(d)
     var i, offset = 0
     var genome_summary = {}
+
     for(i = 0; i < data.length; i++) {
-      let g_size = max(data[i].values.map(function (d) { return d.end} ))
+      let g_size = max(data[i].values.map(function (d) { return d.pos} ))
       genome_summary[data[i].key] = {
         name: data[i].key,
         order: i,
@@ -46,20 +51,28 @@ const GenomeGroup = ({data}) => {
     const gglinear = useRef(null)    
     useEffect(() => {
         if(data && gglinear.current) {
-            var mydat = nest()
-            .key(function(d) { return d.chr })
-            .entries(data)
-            var genome_summary = getGenomeSummary(mydat)
+
+            var genome_summary = getGenomeSummary(data)
             console.log(genome_summary)
+
             let svg = select(gglinear.current)
             // append group translated to chart area
             svg = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
 
-            mydat.forEach(function(d,i){
-        
+            //group by sample then by chr
+            var mydat = nest()
+              .key(function(d) {return d.sample})
+              .key(function(d) {return d.group})
+              .entries(data)
+
+              mydat.forEach(function(sampleData,j){
+                var sampleName = sampleData.key
+                var sampleValues = sampleData.values
+                sampleValues.forEach(function(d,i){ 
+
                 /* draw frame */
                  svg
-                   .append('g')
+                   .append('g').attr('transform', `translate(${margin.left}, ${margin.top+barWidth*j})`)
                    .append('rect')
                    .attr('rx', 2)
                    .attr('ry', 2)
@@ -70,6 +83,8 @@ const GenomeGroup = ({data}) => {
                    .style('fill', '#FF2400AF')
                    .on("click", () => {alert(d.key)});
               })
+            })
+          
 
             svg
             .append('g')
