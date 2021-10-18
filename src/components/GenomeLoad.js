@@ -11,9 +11,9 @@ function heFormat(d) {
     group: d.group,
     pos: +d.pos,
     geneA: d.geneA,
-    covA: +d.covA,
+    covA: parseFloat(d.covA),
     geneB: d.geneB,
-    covB: +d.covB
+    covB: parseFloat(d.covB)
   }
 }
 
@@ -29,7 +29,7 @@ const GenomeLoad = () => {
 
   if (genome === null) {
     // add a loader timeout in 10s
-    return <Loader type="Oval" color="#00BFFF" height={100} width={100} timeout={10000} />
+    return <Loader type="Oval" color="#00BFFF" height={100} width={100} timeout={100000} />
   }
 
   return <GenomeGroup data={genome} />
