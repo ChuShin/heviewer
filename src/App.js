@@ -7,7 +7,7 @@ class App extends Component {
   return (
      <div className='App'>
      <div className='App-header'>
-     <h2>dashboard</h2>
+     <h4>dashboard</h4>
      </div>
      <GenomeLoad />
      </div>

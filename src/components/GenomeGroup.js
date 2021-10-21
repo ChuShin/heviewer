@@ -65,7 +65,8 @@ function getSampleSummary(d) {
 function heColor(mean,sd,cov1,cov2) {
   const pallete = [
   '#FF24009F', '#E567179F', '#FDD0179F',
-  '#5FFB179F','#4EE2EC9F', '#0041C29F', '#E3319D9F']
+  '#5FFB179F','#4EE2EC9F','#0041C29F',
+  '#E3319D9F','#9C67CA9F', '#452E5A9F']
   //const pallete = [
   //  '#73D055FF','#B8DE29FF','#FDE725FF',
   //  '#39568CFF',null,'#238A8DFF',
@@ -104,32 +105,38 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
 
   sampleValues.forEach(function(d,i){
 
-  let pointsA = d.values.map(function (d) {return [d.covA,d.pos]})
-  let pointsB = d.values.map(function (d) {return [-1*d.covB,d.pos]})
-  let mean = sampleSummary[sampleName].mean
+    let pointsA = d.values.map(function (d) {return [d.covA,d.pos]})
+    let pointsB = d.values.map(function (d) {return [-1*d.covB,d.pos]})
+    let mean = sampleSummary[sampleName].mean
+    let chrPosX = xScale(genomeSummary[d.key].offset)+100
 
-
-  let chrPosX = xScale(genomeSummary[d.key].offset)+100
 
   //console.log(pointsB)
-  let x = scaleLinear()
-    .domain([-3*mean, 3*mean])
-    .range([ -60, 60 ]);
+    let x = scaleLinear()
+      .domain([-3*mean, 3*mean])
+      .range([ -60, 60 ])
 
-  svg_dot.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(axisLeft(x));
+    svg_dot
+      .append('g')
+      .attr('class', 'bar-header')
+      .attr('transform', `translate(0, 12)`)
+      .style('font', '14px helvetica')
+      .append('text')
+      .append('tspan')
+      .text(sampleName)
 
   // Add Y axis
   let y = scaleLinear()
-    .domain([0, 60000000])
-    .range([ 0,height]);
+    .domain([0, 70000000])
+    .range([ 0,height])
+  let yAxis = axisLeft().scale(y).ticks(6).tickFormat(function(d,i) {  return d/1000000 })
   svg_dot.append("g")
-  .call(axisLeft(y));
-
+      .attr("transform", `translate(50, 20)`)
+      .style('font', '12px helvetica')
+      .call(yAxis)
 
   svg_dot.append('g')
-    .attr("transform", `translate(50,0)`)
+    .attr("transform", `translate(50, 20)`)
     .selectAll("dot")
     .data(pointsA)
     .enter()
@@ -144,7 +151,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     })
 
   svg_dot.append('g')
-    .attr("transform", `translate(50,0)`)
+    .attr("transform", `translate(50, 20)`)
     .selectAll("dot")
     .data(pointsB)
     .enter()
@@ -159,7 +166,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     })
 
   svg_dot.append("line")
-    .attr("transform", `translate(50,0)`)
+    .attr("transform", `translate(50, 20)`)
     .attr("x1", chrPosX)
     .attr("y1", y(0))
     .attr("x2", chrPosX)
@@ -168,7 +175,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .style("stroke-width", 2)
 
   svg_dot.append("line")
-    .attr("transform", `translate(50,0)`)
+    .attr("transform", `translate(50, 20)`)
     .attr("x1", chrPosX+x(mean))
     .attr("y1", y(0))
     .attr("x2", chrPosX+x(mean))
@@ -177,19 +184,14 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .style("stroke-width", 2)
 
   svg_dot.append("line")
-    .attr("transform", `translate(50,0)`)
+    .attr("transform", `translate(50, 20)`)
     .attr("x1", chrPosX-x(mean))
     .attr("y1", y(0))
     .attr("x2", chrPosX-x(mean))
     .attr("y2", y(genomeSummary[d.key].chrSize))
     .style("stroke", "#69b3a2")
     .style("stroke-width", 2)
-
-
-
   })
-
-
 }
 
 
@@ -199,8 +201,8 @@ const GenomeGroup = ({data}) => {
     useEffect(() => {
         if(data && gglinear.current) {
 
-            let genomeSummary = getGenomeSummary(data)
-            let sampleSummary = getSampleSummary(data)
+            const genomeSummary = getGenomeSummary(data)
+            const sampleSummary = getSampleSummary(data)
             console.log(genomeSummary)
             console.log(sampleSummary)
 
@@ -220,23 +222,39 @@ const GenomeGroup = ({data}) => {
 
 
             //group by sample then by chr
-            let mydat = nest()
+            const heData = nest()
               .key(function(d) {return d.sample})
               .key(function(d) {return d.group})
               .entries(data)
 
-              mydat.forEach(function(sampleData,j){
+              heData.forEach(function(sampleData,j){
                 let sampleName = sampleData.key
                 let sampleValues = sampleData.values
                 let chrPosY = yScale(`${margin.top+barWidth*j}`)
 
                 // sample label
-                svg
+                  svg
+                   .append('g')
+                   .append('rect')
+                   .attr('rx', 2)
+                   .attr('ry', 2)
+                   .attr('x', xScale(0))
+                   .attr('y', chrPosY)
+                   .attr('width', 40)
+                   .attr('height', barWidth)
+                   .style('fill', '#282c34')
+
+                 svg
                   .append("text")
                   .attr("class", "y label")
-                  .attr("x",xScale(0))
-                  .attr("y",chrPosY+barWidth)
+                  .attr("x",20)
+                  .attr("y",chrPosY+yScale(barWidth)-3)
+                  .attr("text-anchor", "middle")
                   .text(sampleName)
+                  .style('font', '14px helvetica')
+                  .style('fill', 'white')
+                  .on("click", () => {setGenome(ggdot,xScale,sampleSummary,genomeSummary,sampleData)})
+
 
                 sampleValues.forEach(function(d,i){
                   let datapoints = d.values.map(function (dp) {
@@ -257,7 +275,6 @@ const GenomeGroup = ({data}) => {
                    .attr('height', barWidth)
                    .style('fill', '#FF2400AF')
                    .style('fill-opacity',0.1)
-                   .on("click", () => {setGenome(ggdot,xScale,sampleSummary,genomeSummary,sampleData)});
 
                   /* draw data points */
                   svg
@@ -284,18 +301,20 @@ const GenomeGroup = ({data}) => {
             .attr('transform', `translate(0, ${margin.top})`)
             .append('text')
             .append('tspan')
-            .text('HE')        
+            .text('HE Events')
+            
+            //set default sample
+            setGenome(ggdot,xScale,sampleSummary, genomeSummary,heData[1])
         }
     },[data])
 
 
     return (
       <div>
-        <svg className='GGLinear' onClick={setSelectedChr}
+        <svg className='GGLinear'
             width = {width + margin.left + margin.right} 
             height= {height + margin.top + margin.bottom}
-            ref={gglinear}></svg>        
-        
+            ref={gglinear}></svg>
         <svg className='GGDot' onClick={setSelectedChr}
         width = {width + margin.left + margin.right} 
         height= {height + margin.top + margin.bottom}
