@@ -5,6 +5,7 @@ import { nest } from 'd3-collection'
 import { scaleLinear } from 'd3-scale'
 import { axisBottom, axisLeft } from 'd3-axis'
 import '../index.css'
+import Loader from "react-loader-spinner";
 
 const margin = { top: 20, right: 20, bottom: 50, left: 20 }
 const width = 1600 - margin.left - margin.right
@@ -115,15 +116,6 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
       .domain([-3*mean, 3*mean])
       .range([ -60, 60 ])
 
-    svg_dot
-      .append('g')
-      .attr('class', 'bar-header')
-      .attr('transform', `translate(0, 12)`)
-      .style('font', '14px helvetica')
-      .append('text')
-      .append('tspan')
-      .text(sampleName)
-
   // Add Y axis
   let y = scaleLinear()
     .domain([0, 70000000])
@@ -134,12 +126,11 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
       .style('font', '12px helvetica')
       .call(yAxis)
 
-  svg_dot.append('g')
+/*  svg_dot.append('g')
     .attr("transform", `translate(50, 20)`)
     .selectAll("dot")
     .data(pointsA)
-    .enter()
-    .append("circle")
+    .enter().append("circle")
     .attr("cx", xi => chrPosX+x(xi[0]))
     .attr("cy", yi => y(yi[1]))
     .attr("r", 1.5)
@@ -153,8 +144,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .attr("transform", `translate(50, 20)`)
     .selectAll("dot")
     .data(pointsB)
-    .enter()
-    .append("circle")
+    .enter().append("circle")
     .attr("cx", xi => chrPosX+x(xi[0]))
     .attr("cy", yi => y(yi[1]))
     .attr("r", 1.5)
@@ -163,7 +153,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
       if(d[0]>-10) return '#69b3a2'
       return '#808080'
     })
-
+*/
   svg_dot.append("line")
     .attr("transform", `translate(50, 20)`)
     .attr("x1", chrPosX)
@@ -197,13 +187,23 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
 const GenomeGroup = ({data}) => {
     const gglinear = useRef(null)
     const ggdot = useRef(null)
+    const [dotplot, setDotPlot] = useState(0)
+
     useEffect(() => {
+
         if(data && gglinear.current) {
 
             const genomeSummary = getGenomeSummary(data)
             const sampleSummary = getSampleSummary(data)
             console.log(genomeSummary)
             console.log(sampleSummary)
+
+            function handleSampleChange(sample, sampleData) {
+                setDotPlot(sample)
+                setGenome(ggdot,xScale,sampleSummary,genomeSummary,sampleData)
+            }
+
+
 
             const xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, width-margin.right])
             const yScale = scaleLinear().domain([0, 300]).range([0, height])
@@ -252,7 +252,9 @@ const GenomeGroup = ({data}) => {
                   .text(sampleName)
                   .style('font', '14px helvetica')
                   .style('fill', 'white')
-                  .on("click", () => {setGenome(ggdot,xScale,sampleSummary,genomeSummary,sampleData)})
+                  .on("click", () => {
+                    handleSampleChange(sampleName, sampleData)
+                  })
 
 
                 sampleValues.forEach(function(d,i){
@@ -307,13 +309,13 @@ const GenomeGroup = ({data}) => {
         }
     },[data])
 
-
     return (
       <div>
         <svg className='GGLinear'
             width = {width + margin.left + margin.right} 
             height= {height + margin.top + margin.bottom}
             ref={gglinear}></svg>
+        <h3>Sample: {dotplot}</h3>
         <svg className='GGDot' onClick={setSelectedChr}
         width = {width + margin.left + margin.right} 
         height= {height + margin.top + margin.bottom}
@@ -321,5 +323,6 @@ const GenomeGroup = ({data}) => {
       </div>
     )
 }
+
 
 export default GenomeGroup
