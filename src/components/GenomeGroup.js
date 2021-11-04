@@ -126,7 +126,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
       .style('font', '12px helvetica')
       .call(yAxis)
 
-/*  svg_dot.append('g')
+  svg_dot.append('g')
     .attr("transform", `translate(50, 20)`)
     .selectAll("dot")
     .data(pointsA)
@@ -153,7 +153,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
       if(d[0]>-10) return '#69b3a2'
       return '#808080'
     })
-*/
+
   svg_dot.append("line")
     .attr("transform", `translate(50, 20)`)
     .attr("x1", chrPosX)
@@ -187,7 +187,8 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
 const GenomeGroup = ({data}) => {
     const gglinear = useRef(null)
     const ggdot = useRef(null)
-    const [dotplot, setDotPlot] = useState(0)
+    const [dotplot, setDotPlot] = useState(null)
+    const [, setSelectedSample] = useState(null)
 
     useEffect(() => {
 
@@ -198,9 +199,23 @@ const GenomeGroup = ({data}) => {
             console.log(genomeSummary)
             console.log(sampleSummary)
 
-            function handleSampleChange(sample, sampleData) {
+            function handleSampleChange(sampleData,j) {
+                let sample = sampleData.key
                 setDotPlot(sample)
-                setGenome(ggdot,xScale,sampleSummary,genomeSummary,sampleData)
+                setGenome(ggdot, xScale, sampleSummary, genomeSummary, sampleData)
+                var sampleButtons = svg.selectAll(".sampleBtn")
+                //unset old
+                sampleButtons.style("fill","#525252")
+                //set new selected
+                sampleButtons.filter(function (d, i) { return i === j;})
+                .style("fill","blue")
+
+                //    .each(function(sb, i) {
+                //        if(i == j) {
+                 //         svg.select(this).style("fill","blue")
+                 //       }
+                  //  })
+                //sampleButton.style("fill","blue")
             }
 
 
@@ -247,13 +262,13 @@ const GenomeGroup = ({data}) => {
                   .append("text")
                   .attr("class", "y label")
                   .attr("x",20)
-                  .attr("y",chrPosY+yScale(barWidth)-3)
+                  .attr("y",chrPosY+yScale(barWidth)-4)
                   .attr("text-anchor", "middle")
                   .text(sampleName)
                   .style('font', '14px helvetica')
                   .style('fill', 'white')
                   .on("click", () => {
-                    handleSampleChange(sampleName, sampleData)
+                    handleSampleChange(sampleData,j)
                   })
 
 
@@ -292,7 +307,6 @@ const GenomeGroup = ({data}) => {
                   .attr('y1', yi => chrPosY )
                   .attr('x2', xi => chrPosX + xScale(xi[0]))
                   .attr('y2', yi => chrPosY + barWidth)
-                  .attr('stroke-width', 1)
                 })
             })
 
@@ -305,7 +319,7 @@ const GenomeGroup = ({data}) => {
             .text('HE Events')
             
             //set default sample
-            setGenome(ggdot,xScale,sampleSummary, genomeSummary,heData[1])
+            handleSampleChange(heData[0],0)
         }
     },[data])
 
@@ -315,7 +329,7 @@ const GenomeGroup = ({data}) => {
             width = {width + margin.left + margin.right} 
             height= {height + margin.top + margin.bottom}
             ref={gglinear}></svg>
-        <h3>Sample: {dotplot}</h3>
+        <h3>{dotplot}</h3>
         <svg className='GGDot' onClick={setSelectedChr}
         width = {width + margin.left + margin.right} 
         height= {height + margin.top + margin.bottom}
