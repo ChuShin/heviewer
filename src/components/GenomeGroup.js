@@ -4,6 +4,7 @@ import { select } from 'd3-selection'
 import { nest } from 'd3-collection'
 import { scaleLinear } from 'd3-scale'
 import { axisBottom, axisLeft } from 'd3-axis'
+import { saveAs } from 'file-saver';
 import '../index.css'
 import Loader from "react-loader-spinner";
 
@@ -63,10 +64,15 @@ function getSampleSummary(d) {
 
 
 function heColor(mean,sd,cov1,cov2) {
+//  const pallete = [
+//  '#FF24009F', '#E567179F', '#FDD0179F',
+//  '#5FFB179F','#4EE2EC9F','#0041C29F',
+//  '#E3319D9F','#9C67CA9F', '#452E5A9F']
   const pallete = [
-  '#FF24009F', '#E567179F', '#FDD0179F',
-  '#5FFB179F','#4EE2EC9F','#0041C29F',
-  '#E3319D9F','#9C67CA9F', '#452E5A9F']
+  '#FF2400', '#E56717', '#FDD017',
+  '#5FFB17','#4EE2EC','#0041C2',
+  '#E3319D','#9C67CA', '#452E5A']
+
   //const pallete = [
   //  '#73D055FF','#B8DE29FF','#FDE725FF',
   //  '#39568CFF',null,'#238A8DFF',
@@ -93,6 +99,53 @@ function heColor(mean,sd,cov1,cov2) {
   /* dup/dup */
   if (zscore1>2 && zscore2>2) return pallete[8]
 }
+
+function getSVGString( svgNode ) {
+	svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+	var serializer = new XMLSerializer();
+	var svgString = serializer.serializeToString(svgNode);
+	svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+	svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+
+	return svgString;
+}
+
+function svgString2Image( svgString, width, height, format, callback ) {
+	var format = format ? format : 'png';
+
+	var imgsrc = 'data:image/svg+xml;base64,'+ btoa( unescape( encodeURIComponent( svgString ) ) ); // Convert SVG string to data URL
+
+	var canvas = document.createElement("canvas");
+	var context = canvas.getContext("2d");
+
+	canvas.width = width;
+	canvas.height = height;
+
+	var image = new Image();
+	image.onload = function() {
+		context.clearRect ( 0, 0, width, height );
+		context.drawImage(image, 0, 0, width, height);
+
+		canvas.toBlob( function(blob) {
+			var filesize = Math.round( blob.length/1024 ) + ' KB';
+			if ( callback ) callback( blob, filesize );
+		});
+
+
+	};
+
+	image.src = imgsrc;
+}
+
+function writeDownloadLink(svgString){
+    try {
+        var isFileSaverSupported = !!new Blob();
+    } catch (e) {
+        alert("blob not supported");
+    }
+    var blob = new Blob([svgString], {type: "image/svg+xml"});
+    saveAs(blob, "test.svg");
+};
 
 
 function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
@@ -212,7 +265,6 @@ const GenomeGroup = ({data}) => {
             }
 
 
-
             const xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, width-margin.right])
             const yScale = scaleLinear().domain([0, 300]).range([0, height])
 
@@ -310,14 +362,35 @@ const GenomeGroup = ({data}) => {
             .append('text')
             .append('tspan')
             .text('HE Events')
-            
             //set default sample
             handleSampleChange(heData[0],0)
+
+            select('#saveButton').on('click', function(){
+	            var svgString = '<svg height="500" width="1000">'+getSVGString(svg.node())+'</svg>';
+	            //var svgString = '<svg height="500" width="1000">'+svg.node().parentNode.innerHTML+'</svg>'
+	            //var svgString = '<svg height="100" width="100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" /></svg>'
+                writeDownloadLink(svgString)
+
+
+	            //svgString2Image( svgString, 2*width, 2*height, 'png', save ); // passes Blob and filesize String to the callback
+	            //function save( dataBlob, filesize ){
+		        //    saveAs( dataBlob, 'D3 vis exported to PNG.png' ); // FileSaver.js function
+                //    console.log(svgString)
+                //    alert("here")
+
+	            //}
+	        })
+
+
         }
     },[data])
 
     return (
       <div>
+        <div>
+            <button id='saveButton'>Export to PNG</button>
+        </div>
+
         <svg className='GGLinear'
             width = {width + margin.left + margin.right} 
             height= {height + margin.top + margin.bottom}
