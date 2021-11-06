@@ -209,13 +209,6 @@ const GenomeGroup = ({data}) => {
                 //set new selected
                 sampleButtons.filter(function (d, i) { return i === j;})
                 .style("fill","blue")
-
-                //    .each(function(sb, i) {
-                //        if(i == j) {
-                 //         svg.select(this).style("fill","blue")
-                 //       }
-                  //  })
-                //sampleButton.style("fill","blue")
             }
 
 
