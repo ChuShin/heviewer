@@ -12,6 +12,45 @@ code {
     monospace;
 }
 
+.header {
+  display: flex;
+  background-color: #282c34;
+  height: 25px;
+  padding: 10px;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.heContainer {
+  max-width: 1000px;
+  margin: 30px auto;
+  overflow: auto;
+  min-height: 300px;
+  border: 1px solid steelblue;
+  padding: 30px;
+  border-radius: 5px;
+}
+
+
+
+.saveBtn {
+  display: inline-block;
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+
+
 rect.sampleBtn {
   stroke:#a2a2a2;
   fill:#525252;
