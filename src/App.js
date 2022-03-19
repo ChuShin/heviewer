@@ -1,18 +1,18 @@
-import React, { Component } from 'react'
-import './App.css'
+import React, { Component }  from 'react';
+import './index.css'
 import GenomeLoad from './components/GenomeLoad'
 
-class App extends Component {
-  render() {
+const App = () => {
   return (
-     <div className='App'>
-     <div className='App-header'>
-     <h4>dashboard</h4>
-     </div>
-     <GenomeLoad />
-     </div>
+    <div>
+       <div className='header'>
+         heviewer
+       </div>
+       <div className='heContainer'>
+         <GenomeLoad />
+       </div>
+    </div>
   )
-  }
 }
 export default App
 
