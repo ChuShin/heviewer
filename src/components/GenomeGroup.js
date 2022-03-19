@@ -3,10 +3,11 @@ import { max, mean,deviation } from 'd3-array'
 import { select } from 'd3-selection'
 import { nest } from 'd3-collection'
 import { scaleLinear } from 'd3-scale'
-import { axisBottom, axisLeft } from 'd3-axis'
+import { axisTop, axisLeft } from 'd3-axis'
 import { saveAs } from 'file-saver';
 import '../index.css'
 import Loader from "react-loader-spinner";
+import * as _ from "lodash";
 
 const margin = { top: 20, right: 20, bottom: 50, left: 20 }
 const width = 1600 - margin.left - margin.right
@@ -64,10 +65,6 @@ function getSampleSummary(d) {
 
 
 function heColor(mean,sd,cov1,cov2) {
-//  const pallete = [
-//  '#FF24009F', '#E567179F', '#FDD0179F',
-//  '#5FFB179F','#4EE2EC9F','#0041C29F',
-//  '#E3319D9F','#9C67CA9F', '#452E5A9F']
   const pallete = [
   '#FF2400', '#E56717', '#FDD017',
   '#5FFB17','#4EE2EC','#0041C2',
@@ -110,6 +107,7 @@ function getSVGString( svgNode ) {
 	return svgString;
 }
 
+
 function svgString2Image( svgString, width, height, format, callback ) {
 	var format = format ? format : 'png';
 
@@ -137,14 +135,14 @@ function svgString2Image( svgString, width, height, format, callback ) {
 	image.src = imgsrc;
 }
 
-function writeDownloadLink(svgString){
+function writeDownloadLink(svgString, filename){
     try {
         var isFileSaverSupported = !!new Blob();
     } catch (e) {
         alert("blob not supported");
     }
     var blob = new Blob([svgString], {type: "image/svg+xml"});
-    saveAs(blob, "test.svg");
+    saveAs(blob, filename);
 };
 
 
@@ -242,6 +240,7 @@ const GenomeGroup = ({data}) => {
     const ggdot = useRef(null)
     const [dotplot, setDotPlot] = useState(null)
     const [, setSelectedSample] = useState(null)
+    const [ggHeight, setGgHeight] = useState('400')
 
     useEffect(() => {
 
@@ -252,10 +251,14 @@ const GenomeGroup = ({data}) => {
             console.log(genomeSummary)
             console.log(sampleSummary)
 
+
             function handleSampleChange(sampleData,j) {
                 let sample = sampleData.key
+                // update sample label
                 setDotPlot(sample)
+                // update plot area
                 setGenome(ggdot, xScale, sampleSummary, genomeSummary, sampleData)
+
                 var sampleButtons = svg.selectAll(".sampleBtn")
                 //unset old
                 sampleButtons.style("fill","#525252")
@@ -264,7 +267,6 @@ const GenomeGroup = ({data}) => {
                 .style("fill","blue")
             }
 
-
             const xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, width-margin.right])
             const yScale = scaleLinear().domain([0, 300]).range([0, height])
 
@@ -272,13 +274,6 @@ const GenomeGroup = ({data}) => {
             let svg = select(gglinear.current)
             // append group translated to chart area
             svg = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
-            /* draw axis */
-            let x_axis = axisBottom().scale(xScale).ticks(5);
-            svg.append('g')
-              .attr('transform', `translate(50, ${height - margin.bottom})`)
-              .style('font', '16px helvetica')
-              .call(x_axis)
-
 
             //group by sample then by chr
             const heData = nest()
@@ -286,37 +281,60 @@ const GenomeGroup = ({data}) => {
               .key(function(d) {return d.group})
               .entries(data)
 
-              heData.forEach(function(sampleData,j){
-                let sampleName = sampleData.key
-                let sampleValues = sampleData.values
-                let chrPosY = yScale(`${margin.top+barWidth*j}`)
+            let num_samples = _.size(heData)
+            //set image height
+            setGgHeight(22 * (num_samples + 1))
+            console.log(num_samples)
 
-                // sample label
-                  svg
-                   .append('g')
-                   .append('rect')
-                   .attr("class","sampleBtn")
-                   .attr('rx', 4)
-                   .attr('ry', 4)
-                   .attr('x', xScale(0))
-                   .attr('y', chrPosY)
-                   .attr('width', 40)
-                   .attr('height', barWidth)
 
-                 svg
+            //let defaultX = xScale(genomeSummary[defaultData.key].offset)
+            /* draw chr labels */
+            for (let chrGroup in genomeSummary) {
+              if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
+                svg
+                  .attr('transform', `translate(50,0)`)
                   .append("text")
-                  .attr("class", "y label")
-                  .attr("x",20)
-                  .attr("y",chrPosY+yScale(barWidth)-4)
+                  .attr("class", "xLabel")
+                  .attr("x",xScale(genomeSummary[chrGroup].offset)+100)
+                  .attr("y",20)
                   .attr("text-anchor", "middle")
-                  .text(sampleName)
-                  .style('font', '14px helvetica')
-                  .style('fill', 'white')
-                  .on("click", () => {
+                  .text(chrGroup)
+                  .style('font', '16px helvetica')
+              }
+            }
+
+            /* draw sample labels */
+            heData.forEach(function(sampleData,j){
+              let sampleName = sampleData.key
+              let sampleValues = sampleData.values
+              let chrPosY = yScale(`${margin.top+barWidth*j}`)
+
+              // sample label
+              svg
+                .append('g')
+                .append('rect')
+                .attr("class","sampleBtn")
+                .attr('rx', 4)
+                .attr('ry', 4)
+                .attr('x', xScale(0))
+                .attr('y', chrPosY)
+                .attr('width', 40)
+                .attr('height', barWidth)
+
+              svg
+                .append("text")
+                .attr("class", "y label")
+                .attr("x",20)
+                .attr("y",chrPosY+yScale(barWidth)-4)
+                .attr("text-anchor", "middle")
+                .text(sampleName)
+                .style('font', '14px helvetica')
+                .style('fill', 'white')
+                .on("click", () => {
                     handleSampleChange(sampleData,j)
-                  })
+                })
 
-
+            /* draw heatmap */
                 sampleValues.forEach(function(d,i){
                   let datapoints = d.values.map(function (dp) {
                     return [dp.pos,heColor(sampleSummary[sampleName].mean,sampleSummary[sampleName].sd,dp.covA,dp.covB)]
@@ -355,21 +373,26 @@ const GenomeGroup = ({data}) => {
                 })
             })
 
-            svg
-            .append('g')
-            .attr('class', 'bar-header')
-            .attr('transform', `translate(0, ${margin.top})`)
-            .append('text')
-            .append('tspan')
-            .text('HE Events')
             //set default sample
             handleSampleChange(heData[0],0)
 
-            select('#saveButton').on('click', function(){
+            select('#saveHeatMap').on('click', function(){
 	            var svgString = '<svg height="500" width="1000">'+getSVGString(svg.node())+'</svg>';
+                writeDownloadLink(svgString, 'heatmap.svg')
+	        })
+            select('#saveScatter').on('click', function(){
+                let svg_dot = select(ggdot.current)
+	            var svgString = '<svg height="500" width="1000">'+getSVGString(svg_dot.node())+'</svg>';
+                writeDownloadLink(svgString, 'scatterplot.svg')
+	        })
+
+
+
+            //select('#saveButton').on('click', function(){
+	            //var svgString = '<svg height="500" width="1000">'+getSVGString(svg.node())+'</svg>';
 	            //var svgString = '<svg height="500" width="1000">'+svg.node().parentNode.innerHTML+'</svg>'
 	            //var svgString = '<svg height="100" width="100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" /></svg>'
-                writeDownloadLink(svgString)
+                //writeDownloadLink(svgString)
 
 
 	            //svgString2Image( svgString, 2*width, 2*height, 'png', save ); // passes Blob and filesize String to the callback
@@ -379,27 +402,31 @@ const GenomeGroup = ({data}) => {
                 //    alert("here")
 
 	            //}
-	        })
-
-
+	        //})
         }
     },[data])
 
     return (
       <div>
         <div>
-            <button id='saveButton'>Export to PNG</button>
+            <button className='saveBtn' id='saveHeatMap'>Export Heatmap</button>
         </div>
-
+        <div className='ggContainer'>
         <svg className='GGLinear'
             width = {width + margin.left + margin.right} 
-            height= {height + margin.top + margin.bottom}
+            height= {ggHeight}
             ref={gglinear}></svg>
+        </div>
+        <div>
+            <button className='saveBtn' id='saveScatter'>Export ScatterPlot</button>
+        </div>
         <h3>{dotplot}</h3>
+        <div className='ggContainer'>
         <svg className='GGDot' onClick={setSelectedChr}
         width = {width + margin.left + margin.right} 
         height= {height + margin.top + margin.bottom}
         ref={ggdot}></svg>
+        </div>
       </div>
     )
 }

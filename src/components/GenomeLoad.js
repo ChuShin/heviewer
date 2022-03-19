@@ -4,6 +4,7 @@ import { csv, tsv } from 'd3-fetch'
 import { ascending } from 'd3-array'
 
 import GenomeGroup from './GenomeGroup'
+import FileLoader from './FileLoader'
 
 function heFormat(d) {
   return {
@@ -25,14 +26,19 @@ const GenomeLoad = () => {
       setGenomeData(data)
     })
   }, [])
-  
+
 
   if (genome === null) {
     // add a loader timeout in 10s
-    return <Loader type="Oval" color="#00BFFF" height={100} width={100} timeout={100000} />
+    return <h3>Loading data..</h3>
   }
 
-  return <GenomeGroup data={genome} />
+  return (
+  <div>
+  <FileLoader />
+  <GenomeGroup data={genome} />
+  </div>
+  )
 }
 
 export default GenomeLoad
