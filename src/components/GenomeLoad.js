@@ -11,9 +11,7 @@ function heFormat(d) {
     sample: d.sample,
     group: d.group,
     pos: +d.pos,
-    geneA: d.geneA,
     covA: parseFloat(d.covA),
-    geneB: d.geneB,
     covB: parseFloat(d.covB)
   }
 }

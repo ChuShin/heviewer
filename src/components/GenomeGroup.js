@@ -19,9 +19,6 @@ const xPosition = 80
 const yPosition = 150
 
 
-function setSelectedChr() {
-}
-
 function getGenomeSummary(d) {
     // group data by chr
     let chrGroup = nest()
@@ -267,6 +264,7 @@ const GenomeGroup = ({data}) => {
                 .style("fill","blue")
             }
 
+
             const xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, width-margin.right])
             const yScale = scaleLinear().domain([0, 300]).range([0, height])
 
@@ -281,10 +279,9 @@ const GenomeGroup = ({data}) => {
               .key(function(d) {return d.group})
               .entries(data)
 
+            //set image height based on number of samples
             let num_samples = _.size(heData)
-            //set image height
             setGgHeight(22 * (num_samples + 1))
-            console.log(num_samples)
 
 
             //let defaultX = xScale(genomeSummary[defaultData.key].offset)
@@ -363,6 +360,7 @@ const GenomeGroup = ({data}) => {
                   .data(datapoints)
                   .enter()
                   .append('line')
+                  .attr("class",d.key)
                   .style('stroke', d => d[1])
                   .attr('chrGroup', d.key)
                   .attr('value',d => d[0])
@@ -408,8 +406,9 @@ const GenomeGroup = ({data}) => {
 
     return (
       <div>
-        <div>
+        <div className = 'actionPanel'>
             <button className='saveBtn' id='saveHeatMap'>Export Heatmap</button>
+            <button className='saveBtn' id='saveScatter'>Export ScatterPlot</button>
         </div>
         <div className='ggContainer'>
         <svg className='GGLinear'
@@ -417,15 +416,11 @@ const GenomeGroup = ({data}) => {
             height= {ggHeight}
             ref={gglinear}></svg>
         </div>
-        <div>
-            <button className='saveBtn' id='saveScatter'>Export ScatterPlot</button>
-        </div>
         <h3>{dotplot}</h3>
         <div className='ggContainer'>
-        <svg className='GGDot' onClick={setSelectedChr}
+        <svg className='GGDot'
         width = {width + margin.left + margin.right} 
-        height= {height + margin.top + margin.bottom}
-        ref={ggdot}></svg>
+        height='400' ref={ggdot}></svg>
         </div>
       </div>
     )
