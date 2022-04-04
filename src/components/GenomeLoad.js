@@ -20,16 +20,11 @@ const GenomeLoad = () => {
   const [genome, setGenomeData] = useState(null)
 
   useEffect(() => {
-    // csv('./data/bna_he.csv',heFormat).then(data => {
-    //  setGenomeData(data)
-    // })
     function handleFileSelect(evt) {
       var file = evt.target.files[0];
       var reader = new FileReader();
       reader.onload = (function(theFile) {
       return function(e) {
-        //drawChart(e.target.result);
-        console.log(e.target.result)
         csv(e.target.result,heFormat).then(data => {
           setGenomeData(data)
         })
