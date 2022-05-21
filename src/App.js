@@ -6,7 +6,7 @@ const App = () => {
   return (
     <div>
        <div className='header'>
-         heviewer
+         HExviewer
        </div>
        <div className='heContainer'>
          <GenomeLoad />
