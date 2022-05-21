@@ -6,6 +6,7 @@
     "@testing-library/jest-dom": "^5.13.0",
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
+    "blueimp-canvas-to-blob": "^3.29.0",
     "browserlist": "^1.0.1",
     "d3": "^6.7.0",
     "d3-collection": "^1.0.7",

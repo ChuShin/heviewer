@@ -10,7 +10,7 @@ import Loader from "react-loader-spinner";
 import * as _ from "lodash";
 
 const margin = { top: 20, right: 20, bottom: 50, left: 20 }
-const width = 1600 - margin.left - margin.right
+const width = 1500 - margin.left - margin.right
 const height = 400 - margin.top - margin.bottom
 const barDistance  = 100
 const chrDistance = 5000000
@@ -289,14 +289,16 @@ const GenomeGroup = ({data}) => {
             for (let chrGroup in genomeSummary) {
               if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
                 svg
-                  .attr('transform', `translate(50,0)`)
+                  .attr('transform', `translate(0,0)`)
                   .append("text")
                   .attr("class", "xLabel")
-                  .attr("x",xScale(genomeSummary[chrGroup].offset)+100)
-                  .attr("y",20)
+                  .attr("x",xScale(genomeSummary[chrGroup].offset)+150)
+                  .attr("y",15)
                   .attr("text-anchor", "middle")
                   .text(chrGroup)
                   .style('font', '16px helvetica')
+                  .style('font-weight','bold')
+                  .style('fill', 'rgb(0, 65, 194)')
               }
             }
 
@@ -315,17 +317,16 @@ const GenomeGroup = ({data}) => {
                 .attr('ry', 4)
                 .attr('x', xScale(0))
                 .attr('y', chrPosY)
-                .attr('width', 40)
+                .attr('width', 70)
                 .attr('height', barWidth)
 
               svg
                 .append("text")
                 .attr("class", "y label")
-                .attr("x",20)
-                .attr("y",chrPosY+yScale(barWidth)-4)
-                .attr("text-anchor", "middle")
+                .attr("x",5)
+                .attr("y",chrPosY+yScale(barWidth)-8)
                 .text(sampleName)
-                .style('font', '14px helvetica')
+                .style('font', '10px helvetica')
                 .style('fill', 'white')
                 .on("click", () => {
                     handleSampleChange(sampleData,j)
@@ -341,7 +342,7 @@ const GenomeGroup = ({data}) => {
                   /* draw frame */
                   svg
                    .append('g')
-                   .attr('transform', `translate(50,0)`)
+                   .attr('transform', `translate(80,0)`)
                    .append('rect')
                    .attr('rx', 2)
                    .attr('ry', 2)
@@ -355,7 +356,7 @@ const GenomeGroup = ({data}) => {
                   /* draw data points */
                   svg
                   .append('g')
-                   .attr('transform', `translate(50,0)`)
+                   .attr('transform', `translate(80,0)`)
                   .selectAll('line')
                   .data(datapoints)
                   .enter()
@@ -407,6 +408,19 @@ const GenomeGroup = ({data}) => {
     return (
       <div>
         <div className = 'actionPanel'>
+            <select className='chrChooser'>
+            <option selected>All</option>
+            <option>C_C1</option>
+            <option>C_C2</option>
+            <option>C_C3</option>
+            <option>C_C4</option>
+            <option>C_C5</option>
+            <option>C_C6</option>
+            <option>C_C7</option>
+            <option>C_C8</option>
+            <option>C_C9</option>
+            </select>
+
             <button className='saveBtn' id='saveHeatMap'>Export Heatmap</button>
             <button className='saveBtn' id='saveScatter'>Export ScatterPlot</button>
         </div>
