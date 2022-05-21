@@ -182,11 +182,6 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .attr("cx", xi => chrPosX+x(xi[0]))
     .attr("cy", yi => y(yi[1]))
     .attr("r", 1.5)
-    .style("fill", d => {
-    if(d[0]>80) return '#69b3a2'
-    if(d[0]<10) return '#9933a2'
-    return '#808080'
-    })
 
   svg_dot.append('g')
     .attr("transform", `translate(50, 20)`)
@@ -196,11 +191,6 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .attr("cx", xi => chrPosX+x(xi[0]))
     .attr("cy", yi => y(yi[1]))
     .attr("r", 1.5)
-    .style("fill", d => {
-      if(d[0]<-80) return '#9933a2'
-      if(d[0]>-10) return '#69b3a2'
-      return '#808080'
-    })
 
   svg_dot.append("line")
     .attr("transform", `translate(50, 20)`)
