@@ -20,7 +20,7 @@ self.__precacheManifest = [
     "url": "/heviewer/static/js/3.dac9cbe5.chunk.js"
   },
   {
-    "revision": "8862420a18f493bbfdfdeb533c7c4879",
+    "revision": "54307478210b11c9478697ecaac6e7ef",
     "url": "/heviewer/index.html"
   }
 ];
