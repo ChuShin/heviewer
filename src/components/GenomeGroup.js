@@ -493,19 +493,6 @@ const GenomeGroup = ({data}) => {
     return (
       <div>
         <div className = 'actionPanel'>
-            <select className='chrChooser'>
-            <option selected>All</option>
-            <option>C_C1</option>
-            <option>C_C2</option>
-            <option>C_C3</option>
-            <option>C_C4</option>
-            <option>C_C5</option>
-            <option>C_C6</option>
-            <option>C_C7</option>
-            <option>C_C8</option>
-            <option>C_C9</option>
-            </select>
-
             <button className='saveBtn' id='saveHeatMap'>Export Heatmap</button>
             <button className='saveBtn' id='saveScatter'>Export ScatterPlot</button>
         </div>
