@@ -4,6 +4,9 @@ import { select } from 'd3-selection'
 import { nest } from 'd3-collection'
 import { scaleLinear } from 'd3-scale'
 import { axisTop, axisLeft } from 'd3-axis'
+import { zoom, zoomIdentity, zoomTransform, invert } from 'd3-zoom'
+import { pointer,event as currentevent } from 'd3'
+
 import { saveAs } from 'file-saver';
 import '../index.css'
 import Loader from "react-loader-spinner";
@@ -162,7 +165,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
   //console.log(pointsB)
     let x = scaleLinear()
       .domain([-3*mean, 3*mean])
-      .range([ -60, 60 ])
+      .range([ -40, 40 ])
 
   // Add Y axis
   let y = scaleLinear()
@@ -182,6 +185,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .attr("cx", xi => chrPosX+x(xi[0]))
     .attr("cy", yi => y(yi[1]))
     .attr("r", 1.5)
+    .style("fill", '#808080')
 
   svg_dot.append('g')
     .attr("transform", `translate(50, 20)`)
@@ -191,6 +195,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .attr("cx", xi => chrPosX+x(xi[0]))
     .attr("cy", yi => y(yi[1]))
     .attr("r", 1.5)
+    .style("fill", '#808080')
 
   svg_dot.append("line")
     .attr("transform", `translate(50, 20)`)
@@ -219,6 +224,100 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     .style("stroke", "#69b3a2")
     .style("stroke-width", 2)
   })
+}
+
+function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary, xScale, chrPosY) {
+
+  //const zooms = zoom()
+  //  .scaleExtent([1, 40])
+  //  .on("zoom", zoomed);
+  //const zooms = zoom().on("zoom", function () {
+  //     //heatMap.attr("transform", `translate(${80-5*chrPosX},0) scale(5,1)`)
+  //     heatMap.attr("transform", `translate(80,0) scale(5,1)`)
+  //  })
+
+  let heatMap = svg.append('g')
+  function zoomed({transform}) {
+    heatMap.attr("transform", transform);
+  }
+
+
+  sampleValues.forEach(function(d,i){
+    let datapoints = d.values.map(function (dp) {
+      return [dp.pos,heColor(sampleSummary[sampleName].mean,sampleSummary[sampleName].sd,dp.covA,dp.covB)]
+    })
+  let chrPosX = xScale(genomeSummary[d.key].offset)
+
+
+  /* draw frame */
+  heatMap
+    .append('g')
+    .attr('transform', `translate(80,0)`)
+    .append('rect')
+    .attr('rx', 2)
+    .attr('ry', 2)
+    .attr('x', chrPosX)
+    .attr('y', chrPosY)
+    .attr('width', xScale(genomeSummary[d.key].chrSize))
+    .attr('height', barWidth)
+    .style('fill', '#FF2400AF')
+    .style('fill-opacity',0.1)
+
+  /* draw data points */
+  var groups = heatMap.append('g');
+  groups
+    .attr('transform', `translate(80,0)`)
+    .selectAll('line')
+    .data(datapoints)
+    .enter()
+    .append('line')
+    .attr("class",d.key)
+    .style('stroke', d => d[1])
+    .attr('chrGroup', d.key)
+    .attr('value',d => d[0])
+    .attr('x1', xi => chrPosX + xScale(xi[0]))
+    .attr('y1', yi => chrPosY )
+    .attr('x2', xi => chrPosX + xScale(xi[0]))
+    .attr('y2', yi => chrPosY + barWidth)
+  })
+  //heatMap.on("click",() => {zooms()})
+  //heatMap.call(zooms)
+}
+
+//possible solution
+//    .call(zoom().on("zoom", function () {
+//       svg.attr("transform", `translate(${80-5*chrPosX},0) scale(5,1)`)
+//    }))
+
+
+
+
+//function chrZoom(event, [x, y]) {
+//    event.stopPropagation();
+//    svg.transition().duration(750).call(
+//      zoom.transform,
+ //     zoomIdentity.translate(width / 2, height / 2).scale(10).translate(-x, -y),
+//      pointer(event)
+//    );
+//  }
+
+function drawChrLabels(svg, genomeSummary, xScale) {
+  let chrLabels = svg.append('g')
+  for (let chrGroup in genomeSummary) {
+    if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
+      chrLabels
+        .attr('transform', `translate(0,0)`)
+        .append("text")
+        .attr("class", "xLabel")
+        .attr("x",xScale(genomeSummary[chrGroup].offset)+150)
+        .attr("y",15)
+        .attr("text-anchor", "middle")
+        .text(chrGroup)
+        .style('font', '16px helvetica')
+        .style('font-weight','bold')
+        .style('fill', 'rgb(0, 65, 194)')
+    }
+  }
 }
 
 
@@ -260,6 +359,8 @@ const GenomeGroup = ({data}) => {
 
 
             let svg = select(gglinear.current)
+            svg.selectAll("*").remove()
+
             // append group translated to chart area
             svg = svg.append('g').attr('transform', `translate(${margin.left}, ${margin.top})`)
 
@@ -271,28 +372,47 @@ const GenomeGroup = ({data}) => {
 
             //set image height based on number of samples
             let num_samples = _.size(heData)
-            setGgHeight(22 * (num_samples + 1))
+            setGgHeight(22 * (num_samples + 2))
 
 
             //let defaultX = xScale(genomeSummary[defaultData.key].offset)
             /* draw chr labels */
-            for (let chrGroup in genomeSummary) {
-              if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
-                svg
-                  .attr('transform', `translate(0,0)`)
-                  .append("text")
-                  .attr("class", "xLabel")
-                  .attr("x",xScale(genomeSummary[chrGroup].offset)+150)
-                  .attr("y",15)
-                  .attr("text-anchor", "middle")
-                  .text(chrGroup)
-                  .style('font', '16px helvetica')
-                  .style('font-weight','bold')
-                  .style('fill', 'rgb(0, 65, 194)')
-              }
+            drawChrLabels(svg, genomeSummary, xScale)
+
+
+            let heatMaps = svg.append('g')
+            var zooms = zoom().scaleExtent([5, 5]).on("zoom",zoomed)
+            var isZoomed = 0
+            heatMaps.on("dblclick", function(event) {
+                var curTransform = zoomTransform(heatMaps.node())
+                var xPos = pointer(event)[0]
+                var xPosZoomed = 5*xPos
+                var lowerBound = -5*60
+                var upperBound = -5*1200
+                var transformation = ""
+                if(isZoomed == 0) {
+                if(xPos < 210 ) {   // left-boundary
+                    transformation = lowerBound
+                }
+                else if(xPos > 1280 ) {   // right-boundary
+                    transformation = upperBound
+                }
+                else { // otherwise
+                    transformation = width / 2 - xPosZoomed
+                }
+                heatMaps.transition().duration(750).attr("transform","translate("+transformation+",0) scale(5,1)")
+                //chrLabels.transition().duration(750).attr("transform","translate("+transformation+",0) scale(5,1)")
+                isZoomed = 1
+                }
+                else {
+                heatMaps.transition().duration(750).call(zooms.transform,zoomIdentity)
+                isZoomed = 0
+                }
+            })
+            function zoomed({transform}) {
+              heatMaps.attr("transform", transform);
             }
 
-            /* draw sample labels */
             heData.forEach(function(sampleData,j){
               let sampleName = sampleData.key
               let sampleValues = sampleData.values
@@ -322,44 +442,11 @@ const GenomeGroup = ({data}) => {
                     handleSampleChange(sampleData,j)
                 })
 
-            /* draw heatmap */
-                sampleValues.forEach(function(d,i){
-                  let datapoints = d.values.map(function (dp) {
-                    return [dp.pos,heColor(sampleSummary[sampleName].mean,sampleSummary[sampleName].sd,dp.covA,dp.covB)]
-                  })
-                  let chrPosX = xScale(genomeSummary[d.key].offset)
+              /* draw heatmap for sample */
+              drawHeatmap(heatMaps, sampleName, sampleValues, sampleSummary, genomeSummary, xScale, chrPosY)
+              //let chr='C_C1'
+              //drawHeatmapForChr(svg, chr, sampleName, sampleValues, sampleSummary, genomeSummary, xScale, chrPosY)
 
-                  /* draw frame */
-                  svg
-                   .append('g')
-                   .attr('transform', `translate(80,0)`)
-                   .append('rect')
-                   .attr('rx', 2)
-                   .attr('ry', 2)
-                   .attr('x', chrPosX)
-                   .attr('y', chrPosY)
-                   .attr('width', xScale(genomeSummary[d.key].chrSize))
-                   .attr('height', barWidth)
-                   .style('fill', '#FF2400AF')
-                   .style('fill-opacity',0.1)
-
-                  /* draw data points */
-                  svg
-                  .append('g')
-                   .attr('transform', `translate(80,0)`)
-                  .selectAll('line')
-                  .data(datapoints)
-                  .enter()
-                  .append('line')
-                  .attr("class",d.key)
-                  .style('stroke', d => d[1])
-                  .attr('chrGroup', d.key)
-                  .attr('value',d => d[0])
-                  .attr('x1', xi => chrPosX + xScale(xi[0]))
-                  .attr('y1', yi => chrPosY )
-                  .attr('x2', xi => chrPosX + xScale(xi[0]))
-                  .attr('y2', yi => chrPosY + barWidth)
-                })
             })
 
             //set default sample
@@ -374,24 +461,6 @@ const GenomeGroup = ({data}) => {
 	            var svgString = '<svg height="500" width="1000">'+getSVGString(svg_dot.node())+'</svg>';
                 writeDownloadLink(svgString, 'scatterplot.svg')
 	        })
-
-
-
-            //select('#saveButton').on('click', function(){
-	            //var svgString = '<svg height="500" width="1000">'+getSVGString(svg.node())+'</svg>';
-	            //var svgString = '<svg height="500" width="1000">'+svg.node().parentNode.innerHTML+'</svg>'
-	            //var svgString = '<svg height="100" width="100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" /></svg>'
-                //writeDownloadLink(svgString)
-
-
-	            //svgString2Image( svgString, 2*width, 2*height, 'png', save ); // passes Blob and filesize String to the callback
-	            //function save( dataBlob, filesize ){
-		        //    saveAs( dataBlob, 'D3 vis exported to PNG.png' ); // FileSaver.js function
-                //    console.log(svgString)
-                //    alert("here")
-
-	            //}
-	        //})
         }
     },[data])
 
