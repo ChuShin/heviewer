@@ -301,23 +301,45 @@ function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary
 //    );
 //  }
 
-function drawChrLabels(svg, genomeSummary, xScale) {
-  let chrLabels = svg.append('g')
+function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
+  let xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, drawWidth])
+  let lastPos = 0
+  let lastChrGroup = ""
   for (let chrGroup in genomeSummary) {
     if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
-      chrLabels
-        .attr('transform', `translate(0,0)`)
-        .append("text")
-        .attr("class", "xLabel")
-        .attr("x",xScale(genomeSummary[chrGroup].offset)+150)
-        .attr("y",15)
-        .attr("text-anchor", "middle")
-        .text(chrGroup)
-        .style('font', '16px helvetica')
-        .style('font-weight','bold')
-        .style('fill', 'rgb(0, 65, 194)')
+      if(genomeSummary[chrGroup].offset > 0) {
+        let labelPos = (genomeSummary[lastChrGroup].offset + genomeSummary[chrGroup].offset) / 2
+        chrLabels
+          .attr('transform', `translate(80,0)`)
+          .append("text")
+          .attr("class", "xLabel")
+          .attr("x",xScale(labelPos))
+          .attr("y",15)
+          .attr("text-anchor", "middle")
+          .text(lastChrGroup)
+          .style('font', '16px helvetica')
+          .style('font-weight','bold')
+          .style('fill', 'rgb(0, 65, 194)')
+        lastChrGroup = chrGroup
+      }
+      else {
+        lastChrGroup=chrGroup
+      }
     }
   }
+  let labelPos = genomeSummary[lastChrGroup].offset + genomeSummary[lastChrGroup].chrSize / 2
+  console.log(lastChrGroup+labelPos)
+  chrLabels
+    .attr('transform', `translate(80,0)`)
+    .append("text")
+    .attr("class", "xLabel")
+    .attr("x",xScale(labelPos))
+    .attr("y",15)
+    .attr("text-anchor", "middle")
+    .text(lastChrGroup)
+    .style('font', '16px helvetica')
+    .style('font-weight','bold')
+    .style('fill', 'rgb(0, 65, 194)')
 }
 
 
@@ -377,7 +399,8 @@ const GenomeGroup = ({data}) => {
 
             //let defaultX = xScale(genomeSummary[defaultData.key].offset)
             /* draw chr labels */
-            drawChrLabels(svg, genomeSummary, xScale)
+            let chrLabels = svg.append('g')
+            drawChrLabels(chrLabels, genomeSummary, width-margin.right)
 
 
             let heatMaps = svg.append('g')
@@ -401,11 +424,17 @@ const GenomeGroup = ({data}) => {
                     transformation = width / 2 - xPosZoomed
                 }
                 heatMaps.transition().duration(750).attr("transform","translate("+transformation+",0) scale(5,1)")
-                //chrLabels.transition().duration(750).attr("transform","translate("+transformation+",0) scale(5,1)")
+                chrLabels.remove()
+                chrLabels = svg.append('g')
+                drawChrLabels(chrLabels, genomeSummary, 5*width)
+                chrLabels.transition().duration(750).attr("transform","translate("+transformation+",0)")
                 isZoomed = 1
                 }
                 else {
                 heatMaps.transition().duration(750).call(zooms.transform,zoomIdentity)
+                chrLabels.remove()
+                chrLabels = svg.append('g')
+                drawChrLabels(chrLabels, genomeSummary, width)
                 isZoomed = 0
                 }
             })
@@ -444,9 +473,6 @@ const GenomeGroup = ({data}) => {
 
               /* draw heatmap for sample */
               drawHeatmap(heatMaps, sampleName, sampleValues, sampleSummary, genomeSummary, xScale, chrPosY)
-              //let chr='C_C1'
-              //drawHeatmapForChr(svg, chr, sampleName, sampleValues, sampleSummary, genomeSummary, xScale, chrPosY)
-
             })
 
             //set default sample
