@@ -340,6 +340,8 @@ function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
 /* function to chr axis in heatmap */
 function drawChrAxis(heatmapAxis, genomeSummary, drawWidth) {
   let xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, drawWidth])
+  heatmapAxis.attr('transform', `translate(80,0)`)
+
   for (let chrGroup in genomeSummary) {
     let chr = genomeSummary[chrGroup]
     if (chr.hasOwnProperty('offset')) {
@@ -348,7 +350,6 @@ function drawChrAxis(heatmapAxis, genomeSummary, drawWidth) {
             .domain([0, chr.chrSize])
             .range([xScale(chr.offset),xScale(chr.chrSize+chr.offset)])
         let chrAxis = heatmapAxis.append('g')
-        chrAxis.attr('transform', `translate(80,0)`)
         chrAxis.call(axisBottom(chrScale).ticks(4).tickFormat(function(d,i) {  return d/1000000 }))
       }
     }
@@ -442,17 +443,32 @@ const GenomeGroup = ({data}) => {
                     transformation = width / 2 - xPosZoomed
                 }
                 heatMaps.transition().duration(750).attr("transform","translate("+transformation+",0) scale(5,1)")
+                /* remove existing label */
                 chrLabels.remove()
+                /* redraw label */
                 chrLabels = svg.append('g')
-                drawChrLabels(chrLabels, genomeSummary, 5*width)
-                chrLabels.transition().duration(750).attr("transform","translate("+transformation+",0)")
+                drawChrLabels(chrLabels, genomeSummary, 5*(width-margin.right))
+                chrLabels.transition().duration(750).attr("transform","translate("+eval(transformation+400)+",0)")
+                /* remove existing chr axis */
+                heatmapAxis.remove()
+                /* redraw axis */
+                heatmapAxis = svg.append('g')
+                drawChrAxis(heatmapAxis, genomeSummary, 5*(width-margin.right))
+                heatmapAxis.transition().duration(750).attr("transform","translate("+eval(transformation+400)+",0)")
                 isZoomed = 1
                 }
                 else {
                 heatMaps.transition().duration(750).call(zooms.transform,zoomIdentity)
+                /* redraw label */
                 chrLabels.remove()
                 chrLabels = svg.append('g')
-                drawChrLabels(chrLabels, genomeSummary, width)
+                /* redraw label */
+                drawChrLabels(chrLabels, genomeSummary, width-margin.right)
+                /* remove existing chr axis */
+                heatmapAxis.remove()
+                heatmapAxis = svg.append('g')
+                /* redraw axis */
+                drawChrAxis(heatmapAxis, genomeSummary, width-margin.right)
                 isZoomed = 0
                 }
             })
