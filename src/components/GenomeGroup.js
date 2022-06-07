@@ -3,7 +3,7 @@ import { max, mean,deviation } from 'd3-array'
 import { select } from 'd3-selection'
 import { nest } from 'd3-collection'
 import { scaleLinear } from 'd3-scale'
-import { axisTop, axisLeft } from 'd3-axis'
+import { axisTop, axisLeft, axisBottom } from 'd3-axis'
 import { zoom, zoomIdentity, zoomTransform, invert } from 'd3-zoom'
 import { pointer,event as currentevent } from 'd3'
 
@@ -154,6 +154,14 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
   let sampleName = sampleData.key
   let sampleValues = sampleData.values
 
+  // Add Y axis
+  let y = scaleLinear().domain([0, 70000000]).range([ 0,height])
+  let yAxis = axisLeft().scale(y).ticks(6).tickFormat(function(d,i) {  return d/1000000 })
+  svg_dot.append("g")
+      .attr("transform", `translate(50, 20)`)
+      .style('font', '12px helvetica')
+      .call(yAxis)
+
   sampleValues.forEach(function(d,i){
 
     let pointsA = d.values.map(function (d) {return [d.covA,d.pos]})
@@ -161,21 +169,10 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
     let mean = sampleSummary[sampleName].mean
     let chrPosX = xScale(genomeSummary[d.key].offset)+100
 
-
   //console.log(pointsB)
     let x = scaleLinear()
       .domain([-3*mean, 3*mean])
       .range([ -40, 40 ])
-
-  // Add Y axis
-  let y = scaleLinear()
-    .domain([0, 70000000])
-    .range([ 0,height])
-  let yAxis = axisLeft().scale(y).ticks(6).tickFormat(function(d,i) {  return d/1000000 })
-  svg_dot.append("g")
-      .attr("transform", `translate(50, 20)`)
-      .style('font', '12px helvetica')
-      .call(yAxis)
 
   svg_dot.append('g')
     .attr("transform", `translate(50, 20)`)
@@ -240,7 +237,6 @@ function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary
   function zoomed({transform}) {
     heatMap.attr("transform", transform);
   }
-
 
   sampleValues.forEach(function(d,i){
     let datapoints = d.values.map(function (dp) {
@@ -328,7 +324,6 @@ function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
     }
   }
   let labelPos = genomeSummary[lastChrGroup].offset + genomeSummary[lastChrGroup].chrSize / 2
-  console.log(lastChrGroup+labelPos)
   chrLabels
     .attr('transform', `translate(80,0)`)
     .append("text")
@@ -341,6 +336,29 @@ function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
     .style('font-weight','bold')
     .style('fill', 'rgb(0, 65, 194)')
 }
+
+
+function drawChrAxis(chrAxis, genomeSummary, drawWidth) {
+  let xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, drawWidth])
+  let lastPos = 0
+  let lastChrGroup = ""
+  chrAxis.call(axisBottom(xScale))
+  for (let chrGroup in genomeSummary) {
+    if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
+      if(genomeSummary[chrGroup].offset > 0) {
+        let chrScale = scaleLinear()
+            .domain([genomeSummary[lastChrGroup].offset, genomeSummary[chrGroup].offset])
+            .range([0,xScale(genomeSummary[chrGroup])])
+        chrAxis.call(axisBottom(chrScale))
+        lastChrGroup = chrGroup
+      }
+      else {
+        lastChrGroup=chrGroup
+      }
+    }
+  }
+}
+
 
 
 const GenomeGroup = ({data}) => {
@@ -401,6 +419,10 @@ const GenomeGroup = ({data}) => {
             /* draw chr labels */
             let chrLabels = svg.append('g')
             drawChrLabels(chrLabels, genomeSummary, width-margin.right)
+
+            /* draw chr axis */
+            let chrAxis = svg.append('g')
+            drawChrAxis(chrAxis, genomeSummary, width-margin.right)
 
 
             let heatMaps = svg.append('g')
