@@ -337,23 +337,19 @@ function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
     .style('fill', 'rgb(0, 65, 194)')
 }
 
-
-function drawChrAxis(chrAxis, genomeSummary, drawWidth) {
+/* function to chr axis in heatmap */
+function drawChrAxis(heatmapAxis, genomeSummary, drawWidth) {
   let xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, drawWidth])
-  let lastPos = 0
-  let lastChrGroup = ""
-  chrAxis.call(axisBottom(xScale))
   for (let chrGroup in genomeSummary) {
-    if (genomeSummary[chrGroup].hasOwnProperty('offset')) {
-      if(genomeSummary[chrGroup].offset > 0) {
+    let chr = genomeSummary[chrGroup]
+    if (chr.hasOwnProperty('offset')) {
+      if(chr.offset >= 0) {
         let chrScale = scaleLinear()
-            .domain([genomeSummary[lastChrGroup].offset, genomeSummary[chrGroup].offset])
-            .range([0,xScale(genomeSummary[chrGroup])])
-        chrAxis.call(axisBottom(chrScale))
-        lastChrGroup = chrGroup
-      }
-      else {
-        lastChrGroup=chrGroup
+            .domain([0, chr.chrSize])
+            .range([xScale(chr.offset),xScale(chr.chrSize+chr.offset)])
+        let chrAxis = heatmapAxis.append('g')
+        chrAxis.attr('transform', `translate(80,0)`)
+        chrAxis.call(axisBottom(chrScale).ticks(4).tickFormat(function(d,i) {  return d/1000000 }))
       }
     }
   }
@@ -421,8 +417,8 @@ const GenomeGroup = ({data}) => {
             drawChrLabels(chrLabels, genomeSummary, width-margin.right)
 
             /* draw chr axis */
-            let chrAxis = svg.append('g')
-            drawChrAxis(chrAxis, genomeSummary, width-margin.right)
+            let heatmapAxis = svg.append('g')
+            drawChrAxis(heatmapAxis, genomeSummary, width-margin.right)
 
 
             let heatMaps = svg.append('g')
