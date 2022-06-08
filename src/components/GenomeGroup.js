@@ -3,9 +3,9 @@ import { max, mean,deviation } from 'd3-array'
 import { select } from 'd3-selection'
 import { nest } from 'd3-collection'
 import { scaleLinear } from 'd3-scale'
-import { axisTop, axisLeft, axisBottom } from 'd3-axis'
-import { zoom, zoomIdentity, zoomTransform, invert } from 'd3-zoom'
-import { pointer,event as currentevent } from 'd3'
+import { axisLeft, axisBottom } from 'd3-axis'
+import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom'
+import { pointer } from 'd3'
 
 import { saveAs } from 'file-saver';
 import '../index.css'
@@ -13,14 +13,10 @@ import Loader from "react-loader-spinner";
 import * as _ from "lodash";
 
 const margin = { top: 20, right: 20, bottom: 50, left: 20 }
-const width = 1500 - margin.left - margin.right
+const width = 1500
 const height = 400 - margin.top - margin.bottom
-const barDistance  = 100
 const chrDistance = 5000000
 const barWidth = 20
-const xPosition = 80
-const yPosition = 150
-
 
 function getGenomeSummary(d) {
     // group data by chr
@@ -107,9 +103,9 @@ function getSVGString( svgNode ) {
 	return svgString;
 }
 
-
-function svgString2Image( svgString, width, height, format, callback ) {
-	var format = format ? format : 'png';
+/*test png download */
+function svgString2Image( svgString, width, height, callback ) {
+	var format = 'png';
 
 	var imgsrc = 'data:image/svg+xml;base64,'+ btoa( unescape( encodeURIComponent( svgString ) ) ); // Convert SVG string to data URL
 
@@ -225,15 +221,7 @@ function setGenome(ggdot,xScale,sampleSummary, genomeSummary,sampleData) {
 
 function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary, xScale, chrPosY) {
 
-  //const zooms = zoom()
-  //  .scaleExtent([1, 40])
-  //  .on("zoom", zoomed);
-  //const zooms = zoom().on("zoom", function () {
-  //     //heatMap.attr("transform", `translate(${80-5*chrPosX},0) scale(5,1)`)
-  //     heatMap.attr("transform", `translate(80,0) scale(5,1)`)
-  //  })
-
-  let heatMap = svg.append('g')
+  let heatMap = svg.append('g').attr('transform', `translate(80,0)`)
   function zoomed({transform}) {
     heatMap.attr("transform", transform);
   }
@@ -248,7 +236,6 @@ function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary
   /* draw frame */
   heatMap
     .append('g')
-    .attr('transform', `translate(80,0)`)
     .append('rect')
     .attr('rx', 2)
     .attr('ry', 2)
@@ -262,12 +249,10 @@ function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary
   /* draw data points */
   var groups = heatMap.append('g');
   groups
-    .attr('transform', `translate(80,0)`)
     .selectAll('line')
     .data(datapoints)
     .enter()
     .append('line')
-    .attr("class",d.key)
     .style('stroke', d => d[1])
     .attr('chrGroup', d.key)
     .attr('value',d => d[0])
@@ -276,26 +261,7 @@ function drawHeatmap(svg, sampleName, sampleValues, sampleSummary, genomeSummary
     .attr('x2', xi => chrPosX + xScale(xi[0]))
     .attr('y2', yi => chrPosY + barWidth)
   })
-  //heatMap.on("click",() => {zooms()})
-  //heatMap.call(zooms)
 }
-
-//possible solution
-//    .call(zoom().on("zoom", function () {
-//       svg.attr("transform", `translate(${80-5*chrPosX},0) scale(5,1)`)
-//    }))
-
-
-
-
-//function chrZoom(event, [x, y]) {
-//    event.stopPropagation();
-//    svg.transition().duration(750).call(
-//      zoom.transform,
- //     zoomIdentity.translate(width / 2, height / 2).scale(10).translate(-x, -y),
-//      pointer(event)
-//    );
-//  }
 
 function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
   let xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, drawWidth])
@@ -338,9 +304,10 @@ function drawChrLabels(chrLabels, genomeSummary, drawWidth) {
 }
 
 /* function to chr axis in heatmap */
-function drawChrAxis(heatmapAxis, genomeSummary, drawWidth) {
+function drawChrAxis(heatmapAxis, genomeSummary, drawWidth, heatmapHeight, numTicks) {
   let xScale = scaleLinear().domain([0, genomeSummary['map_size']]).range([0, drawWidth])
-  heatmapAxis.attr('transform', `translate(80,0)`)
+  let axisYPos = heatmapHeight - 40
+  heatmapAxis.attr('transform', "translate(80, "+axisYPos+")")
 
   for (let chrGroup in genomeSummary) {
     let chr = genomeSummary[chrGroup]
@@ -350,13 +317,11 @@ function drawChrAxis(heatmapAxis, genomeSummary, drawWidth) {
             .domain([0, chr.chrSize])
             .range([xScale(chr.offset),xScale(chr.chrSize+chr.offset)])
         let chrAxis = heatmapAxis.append('g')
-        chrAxis.call(axisBottom(chrScale).ticks(4).tickFormat(function(d,i) {  return d/1000000 }))
+        chrAxis.call(axisBottom(chrScale).ticks(numTicks).tickFormat(function(d,i) {  return d/1000000 }))
       }
     }
   }
 }
-
-
 
 const GenomeGroup = ({data}) => {
     const gglinear = useRef(null)
@@ -408,8 +373,10 @@ const GenomeGroup = ({data}) => {
               .entries(data)
 
             //set image height based on number of samples
-            let num_samples = _.size(heData)
-            setGgHeight(22 * (num_samples + 2))
+
+            let numSamples = _.size(heData)
+            let heatmapHeight = 22 * (numSamples + 3)
+            setGgHeight(heatmapHeight)
 
 
             //let defaultX = xScale(genomeSummary[defaultData.key].offset)
@@ -419,7 +386,7 @@ const GenomeGroup = ({data}) => {
 
             /* draw chr axis */
             let heatmapAxis = svg.append('g')
-            drawChrAxis(heatmapAxis, genomeSummary, width-margin.right)
+            drawChrAxis(heatmapAxis, genomeSummary, width-margin.right,heatmapHeight)
 
 
             let heatMaps = svg.append('g')
@@ -427,34 +394,39 @@ const GenomeGroup = ({data}) => {
             var isZoomed = 0
             heatMaps.on("dblclick", function(event) {
                 var curTransform = zoomTransform(heatMaps.node())
+                var factor = 10
+                var leftPad = 80
+                var plotWidth = width - margin.right
                 var xPos = pointer(event)[0]
-                var xPosZoomed = 5*xPos
-                var lowerBound = -5*60
-                var upperBound = -5*1200
+                var xPosZoomed = factor*xPos
+                var lowerBound = -1*(factor-1)*leftPad
+                var upperBound = -1*(factor)*plotWidth+900
                 var transformation = ""
                 if(isZoomed == 0) {
                 if(xPos < 210 ) {   // left-boundary
                     transformation = lowerBound
                 }
-                else if(xPos > 1280 ) {   // right-boundary
+                //else if(xPos > 1280 ) {   // right-boundary
+                else if(xPos > 1460 ) {   // right-boundary
                     transformation = upperBound
                 }
                 else { // otherwise
-                    transformation = width / 2 - xPosZoomed
+                    transformation = plotWidth / 2 - xPosZoomed
                 }
-                heatMaps.transition().duration(750).attr("transform","translate("+transformation+",0) scale(5,1)")
+                heatMaps.transition().duration(750).attr("transform","translate("+transformation+",0) scale(10,1)")
                 /* remove existing label */
                 chrLabels.remove()
                 /* redraw label */
                 chrLabels = svg.append('g')
-                drawChrLabels(chrLabels, genomeSummary, 5*(width-margin.right))
-                chrLabels.transition().duration(750).attr("transform","translate("+eval(transformation+400)+",0)")
+                drawChrLabels(chrLabels, genomeSummary, factor*plotWidth)
+                chrLabels.transition().duration(750).attr("transform","translate("+transformation+factor*leftPad+",0)")
                 /* remove existing chr axis */
                 heatmapAxis.remove()
                 /* redraw axis */
                 heatmapAxis = svg.append('g')
-                drawChrAxis(heatmapAxis, genomeSummary, 5*(width-margin.right))
-                heatmapAxis.transition().duration(750).attr("transform","translate("+eval(transformation+400)+",0)")
+                drawChrAxis(heatmapAxis, genomeSummary, factor*(width-margin.right), heatmapHeight, 20)
+                heatmapAxis.transition().duration(750).attr("transform",
+                    "translate("+eval(transformation+factor*leftPad)+","+eval(heatmapHeight - 40)+")")
                 isZoomed = 1
                 }
                 else {
@@ -463,12 +435,12 @@ const GenomeGroup = ({data}) => {
                 chrLabels.remove()
                 chrLabels = svg.append('g')
                 /* redraw label */
-                drawChrLabels(chrLabels, genomeSummary, width-margin.right)
+                drawChrLabels(chrLabels, genomeSummary, plotWidth)
                 /* remove existing chr axis */
                 heatmapAxis.remove()
                 heatmapAxis = svg.append('g')
                 /* redraw axis */
-                drawChrAxis(heatmapAxis, genomeSummary, width-margin.right)
+                drawChrAxis(heatmapAxis, genomeSummary, plotWidth, heatmapHeight)
                 isZoomed = 0
                 }
             })
@@ -532,14 +504,14 @@ const GenomeGroup = ({data}) => {
         </div>
         <div className='ggContainer'>
         <svg className='GGLinear'
-            width = {width + margin.left + margin.right} 
+            width = '1600'
             height= {ggHeight}
             ref={gglinear}></svg>
         </div>
         <h3>{dotplot}</h3>
         <div className='ggContainer'>
         <svg className='GGDot'
-        width = {width + margin.left + margin.right} 
+        width = {width + margin.left + margin.right}
         height='400' ref={ggdot}></svg>
         </div>
       </div>

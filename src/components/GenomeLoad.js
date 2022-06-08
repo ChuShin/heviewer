@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Loader from "react-loader-spinner";
-import { csv, tsv } from 'd3-fetch'
-import { ascending } from 'd3-array'
+import { csv } from 'd3-fetch'
 
 import GenomeGroup from './GenomeGroup'
 //import FileLoader from './FileLoader'
